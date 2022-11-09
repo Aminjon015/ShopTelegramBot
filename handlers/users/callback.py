@@ -172,10 +172,71 @@ def reaction_to_cart(call: CallbackQuery):
 def get_text_reply_markup(data):
     text = 'Товары в вашей корзине:\n'
     total_price = 0
-    for product_name, item in data['cart'].item():
+    for product_name, item in data['cart'].items():
         quantity = item['quantity']
         price = item['price']
         total_price += price * quantity
         text += f'{product_name} - {price} ✖️ {quantity} = {price * quantity} сум\n'
             
+    if total_price == 0:
+        text = 'Ваша корзина пустая, но это никогда не поздно исправить :)'
+        markup = generate_main_menu()
+        
+    else:
+        text += f'Общая стоимомть: {total_price}\n'
+        markup = generate_cart_button(data['cart'])
+
+    return {
+        'markup':markup,
+        'text' : text,
+        'total_price':total_price
+    }
+    
+    
+
+@bot.callback_query_handler(lambda call: call.data == 'show_cart')
+def reaction_to_show_cart(call: CallbackQuery):
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+    bot.delete_message(chat_id, call.message.id)
+    try:
+        with bot.retrieve_data(user_id, chat_id) as data:
+            result = get_text_reply_markup(data)
+        text = result['text']
+        markup = result['markup']
+        bot.send_message(chat_id, text, reply_markup=markup)
+    except:
+        bot.send_message(chat_id, 'Ваша корзина пустая' , reply_markup=generate_main_menu())
+        
+        
+@bot.callback_query_handler(lambda call: 'remove' in call.data)
+def reaction_to_remove(call: CallbackQuery):
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+    #remove_1
+    product_id = int(call.data.split('_')[1])
+    with bot.retrieve_data(user_id, chat_id) as data:
+        keys = [key for key in data['cart'].keys()]
+        for product_name in keys:
+            if data['cart'][product_name]['product_id'] == product_id:
+                del data['cart'][product_name]
+    result = get_text_reply_markup(data)
+    text = result['text']
+    markup = result['markup']
+    bot.delete_message(chat_id, call.message.id)
+    bot.send_message(chat_id, text, reply_markup=markup)
+    
+    @bot.callback_query_handler(lambda call: call.data == 'clear_cart')
+    def reaction_to_clear_cart(call : CallbackQuery):
+        chat_id = call.message.chat.id
+        user_id = call.from_user.id
+        bot.delete_state(user_id, chat_id)
+        bot.delete_message(chat_id, call.message.id)
+        bot.send_message(chat_id, 'Ваша корзина очищена')
+        bot.send_message(chat_id, 'Что желаете сделать?', reply_markup=generate_main_menu())
+    
+    
+    
+    
+    
     

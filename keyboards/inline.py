@@ -49,3 +49,18 @@ def generate_product_detail(category_id, product_id, quantity=1):
     markup.row(add_cart, cart)
     markup.row(back, main_menu)
     return markup
+
+
+def generate_cart_button(data: dict):
+    markup = InlineKeyboardMarkup(row_width=1)
+    for product_name, items in data.items():
+        product_id = items['product_id']
+        btn = InlineKeyboardButton(text = f'❎{product_name}❎', callback_data = f'remove_{product_id}')
+        markup.add(btn)
+    back_categories = InlineKeyboardButton(text='Назад к категориям', callback_data=f'back_categories')
+    clear_cart = InlineKeyboardButton(text='Очистить корзину', callback_data=f'clear_cart')
+    submit_order= InlineKeyboardButton(text='Подтвердить', callback_data=f'submit_order')
+    main_menu= InlineKeyboardButton(text='Главное меню', callback_data=f'main_menu')
+    markup.row(clear_cart, submit_order)
+    markup.row(back_categories, main_menu)
+    return markup 
